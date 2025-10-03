@@ -1,4 +1,4 @@
-# logpile
+# claude 4.5's logpile
 
 A command-line tool to search logs by regex, bucket matches by time, count them, and output summaries as tables, CSV/JSON, or plots (ASCII/PNG).
 
