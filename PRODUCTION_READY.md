@@ -72,7 +72,7 @@ Last verified: October 3, 2025
 
 ### ✅ GitHub Push
 ```bash
-git remote add origin https://github.com/lashdown/logpile.git
+git remote add origin https://github.com/laurence-ashdown/logpile.git
 git push -u origin main
 ```
 
@@ -184,7 +184,7 @@ The binary is ready for:
 1. Create repository on GitHub: `logpile`
 2. Push code:
    ```bash
-   git remote add origin https://github.com/lashdown/logpile.git
+   git remote add origin https://github.com/laurence-ashdown/logpile.git
    git branch -M main
    git push -u origin main
    ```

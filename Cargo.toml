@@ -2,10 +2,10 @@
 name = "logpile"
 version = "0.2.0"
 edition = "2021"
-authors = ["lashdown"]
+authors = ["laurence-ashdown"]
 description = "A fast CLI tool to search logs by regex, bucket matches by time, and visualize patterns with charts"
 license = "MIT"
-repository = "https://github.com/lashdown/logpile"
+repository = "https://github.com/laurence-ashdown/logpile"
 keywords = ["log", "analysis", "cli", "regex", "visualization"]
 categories = ["command-line-utilities", "development-tools"]
 readme = "README.md"

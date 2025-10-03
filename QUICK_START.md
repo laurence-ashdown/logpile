@@ -3,7 +3,8 @@
 ## Installation
 
 ```bash
-cd /home/lashdown/repos/logpile
+git clone https://github.com/laurence-ashdown/logpile.git
+cd logpile
 cargo build --release
 ```
 
