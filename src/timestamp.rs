@@ -59,14 +59,17 @@ impl TimestampParser {
             )
             .unwrap(),
             syslog_regex: Regex::new(r"[A-Z][a-z]{2}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2}").unwrap(),
-            apache_regex: Regex::new(r"\[\d{2}/[A-Z][a-z]{2}/\d{4}:\d{2}:\d{2}:\d{2}\s+[+-]\d{4}\]")
-                .unwrap(),
+            apache_regex: Regex::new(
+                r"\[\d{2}/[A-Z][a-z]{2}/\d{4}:\d{2}:\d{2}:\d{2}\s+[+-]\d{4}\]",
+            )
+            .unwrap(),
             rfc2822_regex: Regex::new(
                 r"[A-Z][a-z]{2},\s+\d{2}\s+[A-Z][a-z]{2}\s+\d{4}\s+\d{2}:\d{2}:\d{2}",
             )
             .unwrap(),
             unix_timestamp_regex: Regex::new(r"^\d{10}(?:\.\d+)?").unwrap(),
-            yearless_iso_regex: Regex::new(r"\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z)?").unwrap(),
+            yearless_iso_regex: Regex::new(r"\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z)?")
+                .unwrap(),
             time_only_regex: Regex::new(r"\d{2}:\d{2}:\d{2}(?:\.\d+)?").unwrap(),
         }
     }
@@ -82,7 +85,7 @@ impl TimestampParser {
 
         // Try to extract timestamp-like strings using regex
         let candidates = self.extract_timestamp_candidates(line);
-        
+
         for candidate in candidates {
             // Try each common format
             for format in COMMON_FORMATS {
@@ -191,7 +194,11 @@ impl TimestampParser {
         }
 
         // For time-only formats, we need to add the current date
-        if format.starts_with("%H:") && !format.contains("%Y") && !format.contains("%m") && !format.contains("%d") {
+        if format.starts_with("%H:")
+            && !format.contains("%Y")
+            && !format.contains("%m")
+            && !format.contains("%d")
+        {
             let now = Utc::now();
             let current_date = now.date_naive();
             let with_date = format!("{} {}", current_date.format("%Y-%m-%d"), trimmed);
@@ -272,7 +279,7 @@ mod tests {
         let line = r#"192.168.1.1 - - [03/Oct/2025:14:30:45 +0000] "GET /api HTTP/1.1" 200 1234"#;
         let result = parser.parse_line(line);
         assert!(result.is_some());
-        
+
         let dt = result.unwrap();
         assert_eq!(dt.year(), 2025);
         assert_eq!(dt.month(), 10);
@@ -412,7 +419,7 @@ mod tests {
         let line = "09-24T23:45:29.362Z| INFO| Some random logline";
         let result = parser.parse_line(line);
         assert!(result.is_some());
-        
+
         // Verify it uses current year
         let current_year = Utc::now().year();
         assert_eq!(result.unwrap().year(), current_year);
@@ -424,7 +431,7 @@ mod tests {
         let line = "09-24T23:45:29.362Z| INFO| Some random logline";
         let result = parser.parse_line(line);
         assert!(result.is_some());
-        
+
         // Verify it uses current year
         let current_year = Utc::now().year();
         assert_eq!(result.unwrap().year(), current_year);
@@ -433,7 +440,7 @@ mod tests {
     #[test]
     fn test_parse_yearless_iso_variations() {
         let parser = TimestampParser::new(None);
-        
+
         // Test different variations of yearless ISO format
         let test_cases = vec![
             ("09-24T23:45:29.362Z", 9, 24, 23, 45, 29),
@@ -441,12 +448,20 @@ mod tests {
             ("01-01T12:30:45.123Z", 1, 1, 12, 30, 45),
             ("06-15T18:22:33.999Z", 6, 15, 18, 22, 33),
         ];
-        
-        for (timestamp, expected_month, expected_day, expected_hour, expected_minute, expected_second) in test_cases {
+
+        for (
+            timestamp,
+            expected_month,
+            expected_day,
+            expected_hour,
+            expected_minute,
+            expected_second,
+        ) in test_cases
+        {
             let line = format!("{}| INFO| Test message", timestamp);
             let result = parser.parse_line(&line);
             assert!(result.is_some(), "Failed to parse: {}", timestamp);
-            
+
             let dt = result.unwrap();
             let current_year = Utc::now().year();
             assert_eq!(dt.year(), current_year);
@@ -464,7 +479,7 @@ mod tests {
         let line = "09-24T23:45:29Z| INFO| Some random logline";
         let result = parser.parse_line(line);
         assert!(result.is_some());
-        
+
         let dt = result.unwrap();
         let current_year = Utc::now().year();
         assert_eq!(dt.year(), current_year);
@@ -483,7 +498,7 @@ mod tests {
         // This format is being parsed by the regular ISO regex, not the yearless one
         // So it should succeed but use the current year
         assert!(result.is_some());
-        
+
         let dt = result.unwrap();
         let current_year = Utc::now().year();
         assert_eq!(dt.year(), current_year);
@@ -497,19 +512,24 @@ mod tests {
     #[test]
     fn test_parse_yearless_iso_edge_cases() {
         let parser = TimestampParser::new(None);
-        
+
         // Test edge cases
         let test_cases = vec![
             ("01-01T00:00:00.000Z", "New Year"),
             ("12-31T23:59:59.999Z", "End of year"),
             ("06-30T15:30:45.500Z", "Mid-year"),
         ];
-        
+
         for (timestamp, description) in test_cases {
             let line = format!("{}| INFO| {}", timestamp, description);
             let result = parser.parse_line(&line);
-            assert!(result.is_some(), "Failed to parse {}: {}", description, timestamp);
-            
+            assert!(
+                result.is_some(),
+                "Failed to parse {}: {}",
+                description,
+                timestamp
+            );
+
             let dt = result.unwrap();
             let current_year = Utc::now().year();
             assert_eq!(dt.year(), current_year, "Wrong year for {}", description);
@@ -519,25 +539,29 @@ mod tests {
     #[test]
     fn test_parse_yearless_iso_invalid_formats() {
         let parser = TimestampParser::new(None);
-        
+
         // Test invalid formats that should not parse
         let invalid_cases = vec![
-            "09-24T3:45:29.362Z",      // Single digit hour
-            "09-24T23:5:29.362Z",      // Single digit minute
-            "09-24T23:45:9.362Z",      // Single digit second
+            "09-24T3:45:29.362Z", // Single digit hour
+            "09-24T23:5:29.362Z", // Single digit minute
+            "09-24T23:45:9.362Z", // Single digit second
         ];
-        
+
         for invalid_timestamp in invalid_cases {
             let line = format!("{}| INFO| Test message", invalid_timestamp);
             let result = parser.parse_line(&line);
-            assert!(result.is_none(), "Should not parse invalid format: {}", invalid_timestamp);
+            assert!(
+                result.is_none(),
+                "Should not parse invalid format: {}",
+                invalid_timestamp
+            );
         }
     }
 
     #[test]
     fn test_parse_yearless_iso_with_different_separators() {
         let parser = TimestampParser::new(None);
-        
+
         // Test with different log line separators
         let test_cases = vec![
             "09-24T23:45:29.362Z| INFO| Pipe separator",
@@ -546,11 +570,11 @@ mod tests {
             "09-24T23:45:29.362Z,INFO,Comma separator",
             "09-24T23:45:29.362Z - INFO - Dash separator",
         ];
-        
+
         for line in test_cases {
             let result = parser.parse_line(line);
             assert!(result.is_some(), "Failed to parse: {}", line);
-            
+
             let dt = result.unwrap();
             let current_year = Utc::now().year();
             assert_eq!(dt.year(), current_year);
@@ -565,18 +589,26 @@ mod tests {
     #[test]
     fn test_parse_yearless_iso_with_custom_format() {
         let parser = TimestampParser::new(Some("%m-%dT%H:%M:%S%.3fZ".to_string()));
-        
+
         let test_cases = vec![
             ("09-24T23:45:29.362Z", 9, 24, 23, 45, 29),
             ("12-31T00:00:00.000Z", 12, 31, 0, 0, 0),
             ("01-01T12:30:45.123Z", 1, 1, 12, 30, 45),
         ];
-        
-        for (timestamp, expected_month, expected_day, expected_hour, expected_minute, expected_second) in test_cases {
+
+        for (
+            timestamp,
+            expected_month,
+            expected_day,
+            expected_hour,
+            expected_minute,
+            expected_second,
+        ) in test_cases
+        {
             let line = format!("{}| INFO| Test message", timestamp);
             let result = parser.parse_line(&line);
             assert!(result.is_some(), "Failed to parse: {}", timestamp);
-            
+
             let dt = result.unwrap();
             let current_year = Utc::now().year();
             assert_eq!(dt.year(), current_year);
@@ -591,12 +623,12 @@ mod tests {
     #[test]
     fn test_parse_yearless_iso_priority() {
         let parser = TimestampParser::new(None);
-        
+
         // Test that yearless ISO format takes priority over other formats
         let line = "09-24T23:45:29.362Z| INFO| This should parse as yearless ISO";
         let result = parser.parse_line(line);
         assert!(result.is_some());
-        
+
         let dt = result.unwrap();
         let current_year = Utc::now().year();
         assert_eq!(dt.year(), current_year);
@@ -607,18 +639,27 @@ mod tests {
     #[test]
     fn test_parse_yearless_iso_with_other_timestamps() {
         let parser = TimestampParser::new(None);
-        
+
         // Test that yearless ISO format works alongside other timestamp formats
         let test_cases = vec![
             ("09-24T23:45:29.362Z| INFO| Yearless ISO", 9, 24, 23, 45, 29),
             ("2025-10-03T14:30:45.123Z INFO: Full ISO", 10, 3, 14, 30, 45),
-            ("Oct 03 14:30:45 myserver app: INFO message", 10, 3, 14, 30, 45),
+            (
+                "Oct 03 14:30:45 myserver app: INFO message",
+                10,
+                3,
+                14,
+                30,
+                45,
+            ),
         ];
-        
-        for (line, expected_month, expected_day, expected_hour, expected_minute, expected_second) in test_cases {
+
+        for (line, expected_month, expected_day, expected_hour, expected_minute, expected_second) in
+            test_cases
+        {
             let result = parser.parse_line(line);
             assert!(result.is_some(), "Failed to parse: {}", line);
-            
+
             let dt = result.unwrap();
             assert_eq!(dt.month(), expected_month);
             assert_eq!(dt.day(), expected_day);
@@ -631,18 +672,18 @@ mod tests {
     #[test]
     fn test_parse_time_only_format() {
         let parser = TimestampParser::new(None);
-        
+
         let test_cases = vec![
             ("05:40:12 INFO - Payment processed", 5, 40, 12),
             ("23:59:59.999 ERROR - End of day", 23, 59, 59),
             ("00:00:00 INFO - Midnight", 0, 0, 0),
             ("12:30:45 WARN - Noon warning", 12, 30, 45),
         ];
-        
+
         for (line, expected_hour, expected_minute, expected_second) in test_cases {
             let result = parser.parse_line(line);
             assert!(result.is_some(), "Failed to parse: {}", line);
-            
+
             let dt = result.unwrap();
             let current_date = Utc::now().date_naive();
             assert_eq!(dt.date_naive(), current_date);
@@ -655,11 +696,11 @@ mod tests {
     #[test]
     fn test_parse_time_only_with_custom_format() {
         let parser = TimestampParser::new(Some("%H:%M:%S".to_string()));
-        
+
         let line = "05:40:12 INFO - Payment processed";
         let result = parser.parse_line(line);
         assert!(result.is_some());
-        
+
         let dt = result.unwrap();
         let current_date = Utc::now().date_naive();
         assert_eq!(dt.date_naive(), current_date);
@@ -671,11 +712,11 @@ mod tests {
     #[test]
     fn test_parse_time_only_with_milliseconds() {
         let parser = TimestampParser::new(None);
-        
+
         let line = "05:40:12.123 INFO - Payment processed";
         let result = parser.parse_line(line);
         assert!(result.is_some());
-        
+
         let dt = result.unwrap();
         let current_date = Utc::now().date_naive();
         assert_eq!(dt.date_naive(), current_date);
@@ -688,20 +729,24 @@ mod tests {
     #[test]
     fn test_parse_time_only_invalid_formats() {
         let parser = TimestampParser::new(None);
-        
+
         // Test invalid time-only formats that should not parse
         let invalid_cases = vec![
             "5:40:12 INFO - Single digit hour",
-            "05:4:12 INFO - Single digit minute", 
+            "05:4:12 INFO - Single digit minute",
             "05:40:2 INFO - Single digit second",
             "25:40:12 INFO - Invalid hour",
             "05:60:12 INFO - Invalid minute",
             // Note: 05:40:60 might be parsed by other regexes, so we skip it
         ];
-        
+
         for invalid_line in invalid_cases {
             let result = parser.parse_line(invalid_line);
-            assert!(result.is_none(), "Should not parse invalid time format: {}", invalid_line);
+            assert!(
+                result.is_none(),
+                "Should not parse invalid time format: {}",
+                invalid_line
+            );
         }
     }
 }

@@ -72,12 +72,12 @@ impl LogProcessor {
 
                 if self.matches_patterns(&line) {
                     matching_lines_processed += 1;
-                    
+
                     // Track the first matching line for early exit
                     if first_matching_line.is_none() {
                         first_matching_line = Some(line.clone());
                     }
-                    
+
                     // Try to extract timestamp
                     if let Some(timestamp) = self.timestamp_parser.parse_line(&line) {
                         self.bucket.add(timestamp);
@@ -87,10 +87,13 @@ impl LogProcessor {
                         if first_timestamp_failure.is_none() {
                             first_timestamp_failure = Some(line.clone());
                         }
-                        
+
                         // If we've processed more than 10 matching lines and still no timestamp found,
                         // and we're not in a custom format mode, fail early
-                        if matching_lines_processed > 10 && !timestamp_found && self.args.time_format.is_none() {
+                        if matching_lines_processed > 10
+                            && !timestamp_found
+                            && self.args.time_format.is_none()
+                        {
                             eprintln!(
                                 "Error: No valid timestamps found in first {} matching lines. First failure: {}",
                                 matching_lines_processed,
@@ -99,7 +102,7 @@ impl LogProcessor {
                             eprintln!("Use --time-format to specify a custom timestamp format, or check if your log file has timestamps.");
                             anyhow::bail!("No valid timestamps detected in log file");
                         }
-                        
+
                         eprintln!(
                             "Warning: Could not parse timestamp from: {}",
                             &line.chars().take(80).collect::<String>()
@@ -110,14 +113,20 @@ impl LogProcessor {
 
             // If we processed the entire file and found no matching lines, show a helpful message
             if lines_processed > 0 && matching_lines_processed == 0 {
-                eprintln!("No lines matched the search pattern in {} lines processed", lines_processed);
+                eprintln!(
+                    "No lines matched the search pattern in {} lines processed",
+                    lines_processed
+                );
                 eprintln!("Try a different search pattern or check if your log file contains the expected content.");
                 anyhow::bail!("No matching lines found in log file");
             }
 
             // If we processed the entire file and found no timestamps in matching lines, fail
             if matching_lines_processed > 0 && !timestamp_found && self.args.time_format.is_none() {
-                eprintln!("Error: No valid timestamps found in {} matching lines", matching_lines_processed);
+                eprintln!(
+                    "Error: No valid timestamps found in {} matching lines",
+                    matching_lines_processed
+                );
                 eprintln!("Use --time-format to specify a custom timestamp format, or check if your log file has timestamps.");
                 anyhow::bail!("No valid timestamps detected in log file");
             }
