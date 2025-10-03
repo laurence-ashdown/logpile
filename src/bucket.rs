@@ -100,7 +100,7 @@ impl TimeBucket {
         self.buckets
             .iter()
             .map(|(key, count)| {
-                let dt = DateTime::from_timestamp(*key, 0).unwrap_or_else(|| Utc::now());
+                let dt = DateTime::from_timestamp(*key, 0).unwrap_or_else(Utc::now);
                 (dt, *count)
             })
             .collect()

@@ -92,7 +92,7 @@ pub fn plot_png(buckets: &[(DateTime<Utc>, usize)], output_file: &str) -> Result
                 &BLUE.mix(0.8),
             ))?
             .label("Matches")
-            .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &BLUE));
+            .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], BLUE));
 
         // Draw points
         chart.draw_series(
@@ -103,8 +103,8 @@ pub fn plot_png(buckets: &[(DateTime<Utc>, usize)], output_file: &str) -> Result
 
         chart
             .configure_series_labels()
-            .background_style(&WHITE.mix(0.8))
-            .border_style(&BLACK)
+            .background_style(WHITE.mix(0.8))
+            .border_style(BLACK)
             .draw()?;
 
         root.present()?;

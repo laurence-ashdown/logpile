@@ -37,7 +37,7 @@ pub fn output_table(buckets: &[(DateTime<Utc>, usize)], bucket_size_seconds: i64
 pub fn output_csv(buckets: &[(DateTime<Utc>, usize)]) -> Result<()> {
     let mut wtr = csv::Writer::from_writer(std::io::stdout());
 
-    wtr.write_record(&["timestamp", "count"])?;
+    wtr.write_record(["timestamp", "count"])?;
 
     for (timestamp, count) in buckets {
         wtr.write_record(&[timestamp.to_rfc3339(), count.to_string()])?;
@@ -157,7 +157,7 @@ mod tests {
     #[test]
     fn test_json_output_structure() {
         // We can verify the JSON structure by capturing it
-        let buckets = vec![(Utc.with_ymd_and_hms(2025, 10, 3, 12, 0, 0).unwrap(), 5)];
+        let buckets = [(Utc.with_ymd_and_hms(2025, 10, 3, 12, 0, 0).unwrap(), 5)];
 
         let entries: Vec<BucketEntry> = buckets
             .iter()
