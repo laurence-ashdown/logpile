@@ -1,0 +1,26 @@
+2025-10-03 10:15:23 INFO Application started successfully
+2025-10-03 10:15:45 DEBUG Loading configuration from /etc/app/config.yaml
+2025-10-03 10:16:01 INFO Connected to database: postgresql://db.example.com:5432
+2025-10-03 10:16:15 WARN Connection pool size is below recommended threshold
+2025-10-03 10:17:22 ERROR Failed to fetch user data: connection timeout
+2025-10-03 10:17:23 ERROR Retrying request (attempt 1/3)
+2025-10-03 10:17:45 INFO Successfully retrieved user data on retry
+2025-10-03 10:18:10 INFO Processing batch job: daily_reports
+2025-10-03 10:19:33 ERROR Database query timeout after 30s
+2025-10-03 10:19:35 WARN Falling back to cached data
+2025-10-03 10:20:01 INFO Cache hit rate: 87%
+2025-10-03 10:21:15 ERROR HTTP 500: Internal server error on /api/users
+2025-10-03 10:21:16 DEBUG Stack trace: [...]
+2025-10-03 10:22:45 WARN High memory usage detected: 85%
+2025-10-03 10:23:10 INFO Garbage collection triggered
+2025-10-03 10:24:22 ERROR Failed to send notification email
+2025-10-03 10:24:25 INFO Email queued for retry
+2025-10-03 10:25:33 INFO Request processed: GET /api/status (200 OK)
+2025-10-03 10:26:44 ERROR Authentication failed for user: admin@example.com
+2025-10-03 10:27:12 WARN Rate limit exceeded for IP: 192.168.1.100
+2025-10-03 10:28:01 INFO Daily backup completed successfully
+2025-10-03 10:29:15 ERROR Disk space critical: only 5% remaining
+2025-10-03 10:29:16 CRITICAL System shutdown initiated due to disk space
+2025-10-03 10:30:00 INFO System maintenance window started
+
+
