@@ -14,23 +14,15 @@ jobs:
       
       - name: Create Release
         id: create_release
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
           draft: false
           prerelease: false
-      
-      - name: Output Release URL
-        run: echo "${{ steps.create_release.outputs.upload_url }}" > release_url.txt
-      
-      - name: Save Release URL
-        uses: actions/upload-artifact@v3
-        with:
-          name: release_url
-          path: release_url.txt
+          generate_release_notes: true
 
   build-release:
     name: Build Release
@@ -81,23 +73,13 @@ jobs:
       - name: Build
         run: cargo build --release --target ${{ matrix.target }}
       
-      - name: Download Release URL
-        uses: actions/download-artifact@v3
-        with:
-          name: release_url
-      
-      - name: Get Release URL
-        id: get_release_url
-        shell: bash
-        run: echo "url=$(cat release_url.txt)" >> $GITHUB_OUTPUT
-      
       - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.get_release_url.outputs.url }}
-          asset_path: target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
-          asset_name: ${{ matrix.asset_name }}
-          asset_content_type: application/octet-stream
+          tag_name: ${{ github.ref_name }}
+          files: target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
+          draft: false
+          prerelease: false
 
