@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+
 jobs:
   create-release:
     name: Create Release
@@ -23,6 +26,7 @@ jobs:
           draft: false
           prerelease: false
           generate_release_notes: true
+          make_latest: true
 
   build-release:
     name: Build Release
@@ -82,4 +86,5 @@ jobs:
           files: target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
           draft: false
           prerelease: false
+          make_latest: true
 
