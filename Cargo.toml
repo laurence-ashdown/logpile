@@ -1,6 +1,6 @@
 [package]
 name = "logpile"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["lashdown"]
 description = "A fast CLI tool to search logs by regex, bucket matches by time, and visualize patterns with charts"
