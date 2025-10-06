@@ -17,8 +17,10 @@ logpile/
 │   └── processor.rs         # Main processing orchestration
 ├── examples/
 │   ├── sample.log           # Example log file for testing
-│   └── sample.log.gz        # Gzipped example
-├── test_examples.sh         # Test script
+│   ├── sample.log.gz        # Gzipped example
+│   ├── log_generator.rs     # Log generation tool
+│   └── scripts/             # Demo and test scripts
+├── tests/                   # Integration tests
 ├── README.md                # User documentation
 ├── ARCHITECTURE.md          # This file
 └── LICENSE                  # MIT License
@@ -50,9 +52,11 @@ logpile/
 ### `bucket.rs`
 - `TimeBucket` struct for time-based aggregation
 - Supports fixed bucket sizes (in seconds)
+- **NEW**: Sub-second bucketing support (0.1s, 0.5s, etc.)
 - Supports automatic bucket size selection based on time range
 - Uses `BTreeMap` for ordered bucket storage
 - Tracks first/last timestamps for time range calculation
+- **NEW**: Microsecond precision for high-resolution analysis
 
 ### `reader.rs`
 - `LogReader` enum for different input sources:
@@ -74,16 +78,21 @@ logpile/
 - `plot_ascii()`: ASCII charts using textplots
   - Uses Braille characters for smooth lines
   - Shows time range and bucket information
+  - **NEW**: Terminal size detection for responsive charts
+  - **NEW**: Y-axis zero option for consistent scaling
 - `plot_png()`: Bitmap charts using plotters
   - Generates PPM format (can be converted to PNG)
   - Includes line series and data points
   - Labeled axes with timestamps
 
 ### `processor.rs`
-- `LogProcessor`: Main orchestration logic
+- `LogProcessor`: Main orchestration logic with enhanced error handling
 - Implements two modes:
-  - **Batch mode**: Process files once
-  - **Follow mode**: Continuously monitor file (like tail -f)
+  - **Batch mode**: Process files once with graceful degradation
+  - **Follow mode**: Continuously monitor file (like tail -f) with real-time updates
+- **NEW**: Verbose mode for debugging and detailed output
+- **NEW**: Fail-fast mode for CI/CD environments
+- **NEW**: Better error messages and warnings
 - Compiles regex patterns
 - Iterates through log lines
 - Extracts timestamps and matches patterns
@@ -93,21 +102,23 @@ logpile/
 ## Data Flow
 
 ```
-1. CLI Arguments → Args struct (clap parsing)
+1. CLI Arguments → Args struct (clap parsing with enhanced options)
 2. Args → LogProcessor initialization
    - Compile regex patterns
-   - Create TimestampParser
-   - Initialize TimeBucket
+   - Create TimestampParser with microsecond precision
+   - Initialize TimeBucket with sub-second support
 3. LogProcessor → Read input
-   - Files or stdin
+   - Files or stdin with streaming
    - Decompress if .gz
+   - Follow mode for real-time monitoring
 4. For each line:
    - Check regex match
-   - Parse timestamp
-   - Add to bucket
+   - Parse timestamp with enhanced detection
+   - Add to bucket with microsecond precision
 5. After processing:
    - Get bucket data
-   - Format output (table/CSV/JSON/plot)
+   - Format output (table/CSV/JSON/plot) with responsive sizing
+   - Handle errors gracefully
 ```
 
 ## Key Design Decisions

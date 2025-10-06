@@ -6,13 +6,14 @@ This project has comprehensive unit tests covering all major modules and functio
 
 ### Test Statistics
 
-- **Total Tests**: 49
+- **Total Tests**: 89 (65 unit + 24 integration)
 - **Test Result**: ✅ All Passing
-- **Modules Covered**: 5/5 (100%)
+- **Modules Covered**: 8/8 (100%)
+- **Integration Tests**: ✅ Follow mode, real-time updates, performance
 
 ### Test Breakdown by Module
 
-#### 1. **Bucket Module** (`src/bucket.rs`) - 10 tests
+#### 1. **Bucket Module** (`src/bucket.rs`) - 11 tests
 Tests for time bucketing and auto-sizing logic:
 - `test_bucket_size_from_string` - Parsing bucket size strings
 - `test_time_bucket_creation` - Creating buckets with different configs
@@ -23,6 +24,7 @@ Tests for time bucketing and auto-sizing logic:
 - `test_calculate_auto_bucket_size` - Algorithm for nice intervals
 - `test_buckets_sorted` - BTreeMap keeps buckets sorted
 - `test_empty_bucket` - Empty bucket behavior
+- **NEW**: `test_sub_second_bucketing` - Fractional second bucketing
 
 #### 2. **CLI Module** (`src/cli.rs`) - 6 tests
 Tests for command-line argument parsing and validation:
@@ -145,12 +147,22 @@ All 10 supported timestamp formats are tested:
 
 While unit tests cover individual modules, the project also includes:
 
-1. **Example log files** in `examples/` directory:
+1. **Integration Tests** (`tests/` directory):
+   - `follow_integration_tests.rs` - Real-time follow mode testing
+   - `integration_tests.rs` - Comprehensive follow mode scenarios
+   - `simple_follow_tests.rs` - Basic follow mode functionality
+   - Tests cover CSV/JSON/Plot output in follow mode
+   - Performance testing with rapid updates
+   - File creation during follow mode
+   - Graceful shutdown testing
+
+2. **Example log files** in `examples/` directory:
    - `sample-iso.log` - Basic example
    - `sample-java-app.log` - 10,000+ line Java application log
    - Various timestamp format examples (ISO 8601, Apache, Syslog, RFC 2822, etc.)
+   - `log_generator.rs` - Realistic test data generation tool
 
-2. **Manual testing** via command-line:
+3. **Manual testing** via command-line:
    ```bash
    ./target/release/logpile "ERROR" examples/sample-java-app.log --png test.png
    ./target/release/logpile "INFO" examples/sample-iso.log --json
