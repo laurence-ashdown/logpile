@@ -22,7 +22,7 @@
 ### ✅ Examples & Tests
 - [x] Example log files in `examples/`
 - [x] Timestamp format examples (10 formats)
-- [x] Large test file (java-app.log with 10K+ lines)
+- [x] Large test file (10K+ line Java application logs)
 - [x] Unit tests (49 tests, 100% module coverage)
 - [x] Test documentation
 

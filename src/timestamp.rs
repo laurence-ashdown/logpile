@@ -28,6 +28,7 @@ const COMMON_FORMATS: &[&str] = &[
     "%b %d %H:%M:%S",
     // Apache/Nginx
     "[%d/%b/%Y:%H:%M:%S %z]",
+    "[%d/%b/%Y:%H:%M:%S%.6f %z]",
     // RFC 2822
     "%a, %d %b %Y %H:%M:%S",
 ];
@@ -60,7 +61,7 @@ impl TimestampParser {
             .unwrap(),
             syslog_regex: Regex::new(r"[A-Z][a-z]{2}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2}").unwrap(),
             apache_regex: Regex::new(
-                r"\[\d{2}/[A-Z][a-z]{2}/\d{4}:\d{2}:\d{2}:\d{2}\s+[+-]\d{4}\]",
+                r"\[\d{2}/[A-Z][a-z]{2}/\d{4}:\d{2}:\d{2}:\d{2}(?:\.\d+)?\s+[+-]\d{4}\]",
             )
             .unwrap(),
             rfc2822_regex: Regex::new(

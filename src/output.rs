@@ -8,7 +8,7 @@ struct BucketEntry {
     count: usize,
 }
 
-pub fn output_table(buckets: &[(DateTime<Utc>, usize)], bucket_size_seconds: i64) -> Result<()> {
+pub fn output_table(buckets: &[(DateTime<Utc>, usize)], bucket_size_seconds: f64) -> Result<()> {
     if buckets.is_empty() {
         println!("No matches found.");
         return Ok(());
@@ -29,15 +29,23 @@ pub fn output_table(buckets: &[(DateTime<Utc>, usize)], bucket_size_seconds: i64
 
     println!("{:-^30}-+-{:-^10}", "", "");
     println!("{:30} | {:>10}", "Total", total);
-    println!("\nBucket size: {} seconds", bucket_size_seconds);
+    if bucket_size_seconds < 1.0 {
+        println!("\nBucket size: {:.3} seconds", bucket_size_seconds);
+    } else if bucket_size_seconds == bucket_size_seconds.floor() {
+        println!("\nBucket size: {} seconds", bucket_size_seconds as i64);
+    } else {
+        println!("\nBucket size: {:.3} seconds", bucket_size_seconds);
+    }
 
     Ok(())
 }
 
-pub fn output_csv(buckets: &[(DateTime<Utc>, usize)]) -> Result<()> {
+pub fn output_csv(buckets: &[(DateTime<Utc>, usize)], exclude_headers: bool) -> Result<()> {
     let mut wtr = csv::Writer::from_writer(std::io::stdout());
 
-    wtr.write_record(["timestamp", "count"])?;
+    if !exclude_headers {
+        wtr.write_record(["timestamp", "count"])?;
+    }
 
     for (timestamp, count) in buckets {
         wtr.write_record(&[timestamp.to_rfc3339(), count.to_string()])?;
@@ -49,7 +57,7 @@ pub fn output_csv(buckets: &[(DateTime<Utc>, usize)]) -> Result<()> {
 
 pub fn output_json(
     buckets: &[(DateTime<Utc>, usize)],
-    bucket_size_seconds: i64,
+    bucket_size_seconds: f64,
     time_range: Option<(DateTime<Utc>, DateTime<Utc>)>,
 ) -> Result<()> {
     let entries: Vec<BucketEntry> = buckets
@@ -94,28 +102,28 @@ mod tests {
     #[test]
     fn test_output_table_with_data() {
         let buckets = create_test_buckets();
-        let result = output_table(&buckets, 60);
+        let result = output_table(&buckets, 60.0);
         assert!(result.is_ok());
     }
 
     #[test]
     fn test_output_table_empty() {
         let buckets = vec![];
-        let result = output_table(&buckets, 60);
+        let result = output_table(&buckets, 60.0);
         assert!(result.is_ok());
     }
 
     #[test]
     fn test_output_csv_with_data() {
         let buckets = create_test_buckets();
-        let result = output_csv(&buckets);
+        let result = output_csv(&buckets, false);
         assert!(result.is_ok());
     }
 
     #[test]
     fn test_output_csv_empty() {
         let buckets = vec![];
-        let result = output_csv(&buckets);
+        let result = output_csv(&buckets, true);
         assert!(result.is_ok());
     }
 
@@ -124,21 +132,21 @@ mod tests {
         let buckets = create_test_buckets();
         let start = Utc.with_ymd_and_hms(2025, 10, 3, 12, 0, 0).unwrap();
         let end = Utc.with_ymd_and_hms(2025, 10, 3, 12, 2, 0).unwrap();
-        let result = output_json(&buckets, 60, Some((start, end)));
+        let result = output_json(&buckets, 60.0, Some((start, end)));
         assert!(result.is_ok());
     }
 
     #[test]
     fn test_output_json_without_time_range() {
         let buckets = create_test_buckets();
-        let result = output_json(&buckets, 60, None);
+        let result = output_json(&buckets, 60.0, None);
         assert!(result.is_ok());
     }
 
     #[test]
     fn test_output_json_empty() {
         let buckets = vec![];
-        let result = output_json(&buckets, 60, None);
+        let result = output_json(&buckets, 60.0, None);
         assert!(result.is_ok());
     }
 

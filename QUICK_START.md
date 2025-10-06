@@ -20,66 +20,66 @@ cargo install --path .
 ### 1. Basic Search
 Search for "ERROR" in a log file:
 ```bash
-logpile "ERROR" examples/sample.log
+logpile "ERROR" examples/sample-iso.log
 ```
 
 ### 2. Time Bucketing
 Group matches into 5-minute (300 second) buckets:
 ```bash
-logpile "ERROR" examples/sample.log --bucket 300
+logpile "ERROR" examples/sample-iso.log --bucket 300
 ```
 
 ### 3. Different Output Formats
 
 **CSV:**
 ```bash
-logpile "ERROR" examples/sample.log --bucket 300 --csv > errors.csv
+logpile "ERROR" examples/sample-iso.log --bucket 300 --csv > errors.csv
 ```
 
 **JSON:**
 ```bash
-logpile "WARN" examples/sample.log --bucket 300 --json
+logpile "WARN" examples/sample-iso.log --bucket 300 --json
 ```
 
 **ASCII Plot:**
 ```bash
-logpile "ERROR|WARN" examples/sample.log --bucket 300 --plot
+logpile "ERROR|WARN" examples/sample-iso.log --bucket 300 --plot
 ```
 
 **Bitmap Chart:**
 ```bash
-logpile "ERROR" examples/sample.log --bucket 300 --png chart.ppm
+logpile "ERROR" examples/sample-iso.log --bucket 300 --png chart.ppm
 ```
 
 ### 4. Multiple Patterns
 Search for multiple patterns:
 ```bash
-logpile "ERROR" examples/sample.log --grep "WARN" --grep "CRITICAL" --bucket 600
+logpile "ERROR" examples/sample-iso.log --grep "WARN" --grep "CRITICAL" --bucket 600
 ```
 
 ### 5. Gzipped Files
 Transparently read gzipped logs:
 ```bash
-logpile "ERROR" examples/sample.log.gz --bucket 300
+logpile "ERROR" examples/sample-iso.log.gz --bucket 300
 ```
 
 ### 6. Stdin Input
 Pipe logs from other commands:
 ```bash
-cat examples/sample.log | logpile "INFO" --bucket 600
+cat examples/sample-iso.log | logpile "INFO" --bucket 600
 zcat large_log.gz | logpile "timeout" --bucket 3600
 ```
 
 ### 7. Auto Bucket Size
 Let logpile choose the best bucket size:
 ```bash
-logpile "ERROR" examples/sample.log --bucket auto
+logpile "ERROR" examples/sample-iso.log --bucket auto
 ```
 
 ### 8. Count All Lines
 Count all log entries without pattern filtering:
 ```bash
-logpile --no-default-pattern examples/sample.log --bucket 600
+logpile --no-default-pattern examples/sample-iso.log --bucket 600
 ```
 
 ## Common Use Cases

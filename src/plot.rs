@@ -3,45 +3,162 @@ use chrono::{DateTime, Utc};
 use image::{ImageBuffer, Rgb};
 use plotters::backend::BitMapBackend;
 use plotters::prelude::*;
-use textplots::{Chart, Plot, Shape};
+use terminal_size::{terminal_size, Width};
+use textplots::{
+    AxisBuilder, Chart, LabelBuilder, LabelFormat, Plot, Shape, TickDisplay, TickDisplayBuilder,
+};
 
-pub fn plot_ascii(buckets: &[(DateTime<Utc>, usize)]) -> Result<()> {
+pub fn plot_ascii(
+    buckets: &[(DateTime<Utc>, usize)],
+    time_range: Option<(DateTime<Utc>, DateTime<Utc>)>,
+    bucket_size_seconds: f64,
+    pattern: &str,
+    _files: &[String],
+    y_zero: bool,
+) -> Result<()> {
     if buckets.is_empty() {
         println!("No data to plot.");
         return Ok(());
     }
+    // Use actual time range if provided, otherwise fall back to bucket range
+    let (first_ts, last_ts, time_range_seconds) = if let Some((first, last)) = time_range {
+        let range_seconds = (last.timestamp() - first.timestamp()) as f32;
+        (first, last, range_seconds)
+    } else {
+        let (first, _) = buckets.first().unwrap();
+        let (last, _) = buckets.last().unwrap();
+        let range_seconds = (last.timestamp() - first.timestamp()) as f32;
+        (*first, *last, range_seconds)
+    };
 
-    // Convert to points for textplots
+    // Calculate dimensions
+    let max_count = buckets.iter().map(|(_, c)| c).max().unwrap_or(&0);
+    let duration_hours = time_range_seconds / 3600.0;
+
+    // Format files list
+    let files_str = if _files.is_empty() {
+        "stdin".to_string()
+    } else if _files.len() == 1 {
+        _files[0].clone()
+    } else {
+        format!("{} files", _files.len())
+    };
+
+    // Convert to points for textplots using bucket indices
     let points: Vec<(f32, f32)> = buckets
         .iter()
         .enumerate()
         .map(|(i, (_, count))| (i as f32, *count as f32))
         .collect();
 
-    // Calculate dimensions
-    let max_count = buckets.iter().map(|(_, c)| c).max().unwrap_or(&0);
+    let x_min = 0.0;
+    let x_max = (points.len().saturating_sub(1)) as f32;
 
-    println!("\nLog Matches Over Time");
-    println!("{}", "=".repeat(60));
+    // Calculate Y-axis range
+    let y_min = if y_zero {
+        0.0
+    } else {
+        let min_count = buckets.iter().map(|(_, c)| *c).min().unwrap_or(0) as f32;
+        (min_count * 0.9).max(0.0) // 10% padding below min, but not negative
+    };
+    let y_max = *max_count as f32;
 
-    Chart::new(180, 60, 0.0, points.len() as f32)
-        .lineplot(&Shape::Lines(&points))
-        .display();
+    // Build and display chart
+    render_chart(
+        &points,
+        x_min,
+        x_max,
+        y_min,
+        y_max,
+        pattern,
+        bucket_size_seconds,
+        &files_str,
+    );
 
-    println!("\n{}", "=".repeat(60));
-    println!("X-axis: Bucket index (0-{})", buckets.len() - 1);
-    println!("Y-axis: Match count (max: {})", max_count);
+    let bucket_count = buckets.len();
 
-    // Show time range
-    if let (Some((first_ts, _)), Some((last_ts, _))) = (buckets.first(), buckets.last()) {
+    // Enhanced x-axis information
+    if bucket_size_seconds < 1.0 {
         println!(
-            "Time range: {} to {}",
-            first_ts.format("%Y-%m-%d %H:%M:%S"),
-            last_ts.format("%Y-%m-%d %H:%M:%S")
+            "X-axis: Time offset (0-{:.1}s) | Buckets: {} ({:.1}s each)",
+            time_range_seconds, bucket_count, bucket_size_seconds
+        );
+    } else if bucket_size_seconds < 60.0 {
+        println!(
+            "X-axis: Time offset (0-{:.0}s) | Buckets: {} ({:.0}s each)",
+            time_range_seconds, bucket_count, bucket_size_seconds
+        );
+    } else if bucket_size_seconds < 3600.0 {
+        println!(
+            "X-axis: Time offset (0-{:.0}s) | Buckets: {} ({:.0}m each)",
+            time_range_seconds,
+            bucket_count,
+            bucket_size_seconds / 60.0
+        );
+    } else {
+        println!(
+            "X-axis: Time offset (0-{:.1}h) | Buckets: {} ({:.1}h each)",
+            duration_hours,
+            bucket_count,
+            bucket_size_seconds / 3600.0
         );
     }
 
+    println!("Y-axis: Match count (max: {})", max_count);
+
+    // Show time range
+    println!(
+        "Time range: {} to {}",
+        first_ts.format("%Y-%m-%d %H:%M:%S"),
+        last_ts.format("%Y-%m-%d %H:%M:%S")
+    );
+
     Ok(())
+}
+
+fn chart_width_for_terminal() -> u32 {
+    if let Some((Width(w), _)) = terminal_size() {
+        // textplots internally halves width, so compensate
+        ((w as u32 * 2) as f32 * 0.87).round() as u32
+    } else {
+        160 // fallback (80 * 2)
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn render_chart(
+    points: &[(f32, f32)],
+    x_min: f32,
+    x_max: f32,
+    y_min: f32,
+    y_max: f32,
+    pattern: &str,
+    _bucket_size_seconds: f64,
+    files_str: &str,
+) {
+    let term = console::Term::stdout();
+
+    // calculate proper width
+    let chart_width = chart_width_for_terminal();
+    let _line_width = (chart_width / 2) - 10;
+    let chart_height = (((chart_width / 2) as f32) / ((1.0 / 0.635) as f32)).round() as u32;
+
+    term.hide_cursor().unwrap();
+    term.clear_screen().unwrap();
+    term.move_cursor_to(0, 0).unwrap();
+
+    println!("\nPattern: \"{}\" | Files: {}\n", pattern, files_str);
+
+    Chart::new_with_y_range(chart_width, chart_height, x_min, x_max, y_min, y_max)
+        .lineplot(&Shape::Lines(points))
+        .x_axis_style(textplots::LineStyle::Solid)
+        .y_axis_style(textplots::LineStyle::Solid)
+        .y_tick_display(TickDisplay::Sparse)
+        .x_label_format(LabelFormat::Value)
+        .y_label_format(LabelFormat::Value)
+        .nice();
+
+    term.show_cursor().unwrap();
 }
 
 pub fn plot_png(buckets: &[(DateTime<Utc>, usize)], output_file: &str) -> Result<()> {

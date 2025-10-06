@@ -2,51 +2,108 @@ use clap::Parser;
 
 #[derive(Parser, Debug, Clone)]
 #[command(name = "logpile")]
-#[command(about = "Search logs by regex, bucket matches by time, and output summaries", long_about = None)]
+#[command(about = "Search logs by regex, bucket matches by time, and output summaries")]
+#[command(
+    long_about = "A fast CLI tool to search logs by regex, bucket matches by time, and visualize patterns with charts.
+
+Default output format is a human-readable table. Use output options (-c, -j, -p, -o) to change format."
+)]
 pub struct Args {
     /// Regex pattern to search for (required unless --no-default-pattern is set)
-    #[arg(value_name = "REGEX")]
+    #[arg(
+        value_name = "REGEX",
+        help = "Regular expression to match in log lines"
+    )]
     pub pattern: Option<String>,
 
-    /// Log files to search (supports .gz files). If empty, reads from stdin.
-    #[arg(value_name = "FILES")]
+    /// Log files to search (supports .gz files). If no files provided, reads from stdin.
+    #[arg(
+        value_name = "FILES",
+        help = "Log files to process (supports glob patterns and .gz files). If omitted, reads from stdin."
+    )]
     pub files: Vec<String>,
 
-    /// Time format string (chrono-compatible). If not provided, auto-detects.
-    #[arg(long, value_name = "FMT")]
-    pub time_format: Option<String>,
-
-    /// Bucket size in seconds, or "auto" for automatic selection
-    #[arg(long, value_name = "SECONDS")]
-    pub bucket: Option<String>,
-
+    // === OUTPUT OPTIONS ===
     /// Output as CSV
-    #[arg(long, conflicts_with_all = &["json", "plot", "png"])]
+    #[arg(long, short = 'c', conflicts_with_all = &["json", "plot", "png"], help = "Output results in CSV format")]
     pub csv: bool,
 
+    /// Exclude headers from CSV output
+    #[arg(long, requires = "csv", conflicts_with_all = &["json", "plot", "png"], help = "Exclude column headers from CSV output")]
+    pub no_headers: bool,
+
     /// Output as JSON
-    #[arg(long, conflicts_with_all = &["csv", "plot", "png"])]
+    #[arg(long, short = 'j', conflicts_with_all = &["csv", "plot", "png"], help = "Output results in JSON format")]
     pub json: bool,
 
     /// Output as ASCII chart
-    #[arg(long, conflicts_with_all = &["csv", "json", "png"])]
+    #[arg(long, short = 'p', conflicts_with_all = &["csv", "json", "png"], help = "Display results as ASCII chart")]
     pub plot: bool,
 
+    /// Start Y-axis at zero (only applies to ASCII plots)
+    #[arg(long, requires = "plot", help = "Start Y-axis at zero in ASCII plots")]
+    pub y_zero: bool,
+
     /// Output as PNG chart to the specified file
-    #[arg(long, value_name = "FILE", conflicts_with_all = &["csv", "json", "plot"])]
+    #[arg(long, short = 'o', value_name = "FILE", conflicts_with_all = &["csv", "json", "plot"], help = "Save chart as PNG file")]
     pub png: Option<String>,
 
-    /// Streaming mode (like tail -f) with live updates
-    #[arg(long)]
-    pub follow: bool,
+    // === PROCESSING OPTIONS ===
+    /// Time format string (chrono-compatible). If not provided, auto-detects.
+    #[arg(
+        long,
+        short = 't',
+        value_name = "FMT",
+        help = "Custom timestamp format (e.g., \"%Y-%m-%d %H:%M:%S\")"
+    )]
+    pub time_format: Option<String>,
+
+    /// Bucket size in seconds, or "auto" for automatic selection
+    #[arg(
+        long,
+        short = 'b',
+        value_name = "SECONDS",
+        help = "Time bucket size in seconds, or \"auto\" for automatic"
+    )]
+    pub bucket: Option<String>,
 
     /// Additional regex patterns to filter (can be used multiple times)
-    #[arg(long, value_name = "REGEX")]
+    #[arg(
+        long,
+        short = 'g',
+        value_name = "REGEX",
+        help = "Additional regex patterns to match"
+    )]
     pub grep: Vec<String>,
 
     /// Run without a required positional regex (count all lines)
-    #[arg(long)]
+    #[arg(
+        long,
+        short = 'n',
+        help = "Process all lines without requiring a search pattern"
+    )]
     pub no_default_pattern: bool,
+
+    // === BEHAVIOR OPTIONS ===
+    /// Streaming mode (like tail -f) with live updates
+    #[arg(
+        long,
+        short = 'f',
+        help = "Follow log file and update display in real-time"
+    )]
+    pub follow: bool,
+
+    /// Enable verbose output (show warnings and debug info)
+    #[arg(long, short = 'v', help = "Enable verbose output with warnings")]
+    pub verbose: bool,
+
+    /// Fail fast if any file has no matches
+    #[arg(
+        long,
+        short = 'q',
+        help = "Exit immediately if any file has no matching lines"
+    )]
+    pub fail_quick: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -114,12 +171,16 @@ mod tests {
             time_format: None,
             bucket: None,
             csv: false,
+            no_headers: false,
             json: false,
             plot: false,
+            y_zero: false,
             png: None,
             follow: false,
             grep: vec![],
             no_default_pattern: false,
+            verbose: false,
+            fail_quick: false,
         };
         assert_eq!(args.output_format(), OutputFormat::Table);
 
@@ -137,6 +198,7 @@ mod tests {
 
         let args_plot = Args {
             plot: true,
+            y_zero: false,
             ..args.clone()
         };
         assert_eq!(args_plot.output_format(), OutputFormat::AsciiPlot);
@@ -156,12 +218,16 @@ mod tests {
             time_format: None,
             bucket: None,
             csv: false,
+            no_headers: false,
             json: false,
             plot: false,
+            y_zero: false,
             png: None,
             follow: false,
             grep: vec![],
             no_default_pattern: false,
+            verbose: false,
+            fail_quick: false,
         };
         assert!(args.validate().is_err());
 
@@ -186,12 +252,16 @@ mod tests {
             time_format: None,
             bucket: None,
             csv: false,
+            no_headers: false,
             json: false,
             plot: false,
+            y_zero: false,
             png: None,
             follow: false,
             grep: vec![],
             no_default_pattern: false,
+            verbose: false,
+            fail_quick: false,
         };
         assert_eq!(args.get_pattern(), Some("test"));
 
@@ -210,12 +280,16 @@ mod tests {
             time_format: None,
             bucket: None,
             csv: false,
+            no_headers: false,
             json: false,
             plot: false,
+            y_zero: false,
             png: None,
             follow: false,
             grep: vec![],
             no_default_pattern: false,
+            verbose: false,
+            fail_quick: false,
         };
 
         let files = args.get_files();
@@ -232,12 +306,16 @@ mod tests {
             time_format: None,
             bucket: None,
             csv: false,
+            no_headers: false,
             json: false,
             plot: false,
+            y_zero: false,
             png: None,
             follow: false,
             grep: vec![],
             no_default_pattern: true,
+            verbose: false,
+            fail_quick: false,
         };
 
         let files = args.get_files();
@@ -254,12 +332,16 @@ mod tests {
             time_format: None,
             bucket: None,
             csv: false,
+            no_headers: false,
             json: false,
             plot: false,
+            y_zero: false,
             png: None,
             follow: false,
             grep: vec![],
             no_default_pattern: false,
+            verbose: false,
+            fail_quick: false,
         };
 
         assert_eq!(args.get_files().len(), 0);

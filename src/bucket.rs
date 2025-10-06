@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 
 #[derive(Debug, Clone)]
 pub enum BucketSize {
-    Seconds(i64),
+    Seconds(f64),
     Auto,
 }
 
@@ -12,7 +12,7 @@ impl BucketSize {
         if s.to_lowercase() == "auto" {
             Ok(BucketSize::Auto)
         } else {
-            let seconds: i64 = s
+            let seconds: f64 = s
                 .parse()
                 .map_err(|_| anyhow::anyhow!("Invalid bucket size: must be a number or 'auto'"))?;
             Ok(BucketSize::Seconds(seconds))
@@ -31,7 +31,7 @@ impl TimeBucket {
     pub fn new(bucket_size: Option<String>) -> anyhow::Result<Self> {
         let size = match bucket_size {
             Some(s) => BucketSize::from_string(&s)?,
-            None => BucketSize::Seconds(60), // Default: 1 minute
+            None => BucketSize::Seconds(60.0), // Default: 1 minute
         };
 
         Ok(Self {
@@ -52,47 +52,53 @@ impl TimeBucket {
         }
 
         let bucket_seconds = self.get_bucket_size();
-        let bucket_key = (timestamp.timestamp() / bucket_seconds) * bucket_seconds;
+        let timestamp_micros = timestamp.timestamp_micros();
+        let bucket_micros = (bucket_seconds * 1_000_000.0) as i64;
+        let bucket_key = (timestamp_micros / bucket_micros) * bucket_micros;
 
         *self.buckets.entry(bucket_key).or_insert(0) += 1;
     }
 
-    fn get_bucket_size(&self) -> i64 {
+    fn get_bucket_size(&self) -> f64 {
         match &self.bucket_size {
             BucketSize::Seconds(s) => *s,
             BucketSize::Auto => {
                 // Calculate auto bucket size based on time range
                 if let (Some(first), Some(last)) = (self.first_timestamp, self.last_timestamp) {
-                    let duration = last.signed_duration_since(first).num_seconds();
+                    let duration = last.signed_duration_since(first).num_seconds() as f64;
                     self.calculate_auto_bucket_size(duration)
                 } else {
-                    60 // Default to 1 minute
+                    60.0 // Default to 1 minute
                 }
             }
         }
     }
 
-    fn calculate_auto_bucket_size(&self, total_seconds: i64) -> i64 {
-        // Aim for around 20-50 buckets for good visualization
-        const TARGET_BUCKETS: i64 = 30;
+    fn calculate_auto_bucket_size(&self, total_seconds: f64) -> f64 {
+        // Aim for around 15-20 buckets for reasonable output size
+        const TARGET_BUCKETS: f64 = 15.0;
 
         let ideal = total_seconds / TARGET_BUCKETS;
 
         // Round to nice intervals
-        if ideal < 60 {
-            60 // 1 minute minimum
-        } else if ideal < 300 {
-            300 // 5 minutes
-        } else if ideal < 900 {
-            900 // 15 minutes
-        } else if ideal < 3600 {
-            3600 // 1 hour
-        } else if ideal < 21600 {
-            21600 // 6 hours
-        } else if ideal < 86400 {
-            86400 // 1 day
+        if ideal < 0.1 {
+            0.1 // 100ms minimum
+        } else if ideal < 1.0 {
+            1.0 // 1 second
+        } else if ideal < 60.0 {
+            60.0 // 1 minute
+        } else if ideal < 300.0 {
+            300.0 // 5 minutes
+        } else if ideal < 900.0 {
+            900.0 // 15 minutes
+        } else if ideal < 3600.0 {
+            3600.0 // 1 hour
+        } else if ideal < 21600.0 {
+            21600.0 // 6 hours
+        } else if ideal < 86400.0 {
+            86400.0 // 1 day
         } else {
-            (ideal / 86400) * 86400 // Multiple of days
+            (ideal / 86400.0).floor() * 86400.0 // Multiple of days
         }
     }
 
@@ -100,7 +106,7 @@ impl TimeBucket {
         self.buckets
             .iter()
             .map(|(key, count)| {
-                let dt = DateTime::from_timestamp(*key, 0).unwrap_or_else(Utc::now);
+                let dt = DateTime::from_timestamp_micros(*key).unwrap_or_else(Utc::now);
                 (dt, *count)
             })
             .collect()
@@ -110,7 +116,7 @@ impl TimeBucket {
         self.buckets.values().sum()
     }
 
-    pub fn bucket_size_seconds(&self) -> i64 {
+    pub fn bucket_size_seconds(&self) -> f64 {
         self.get_bucket_size()
     }
 
@@ -131,7 +137,7 @@ mod tests {
     fn test_bucket_size_from_string() {
         let size = BucketSize::from_string("60").unwrap();
         match size {
-            BucketSize::Seconds(s) => assert_eq!(s, 60),
+            BucketSize::Seconds(s) => assert_eq!(s, 60.0),
             _ => panic!("Expected Seconds variant"),
         }
 
@@ -145,13 +151,13 @@ mod tests {
     fn test_time_bucket_creation() {
         let bucket = TimeBucket::new(None).unwrap();
         assert_eq!(bucket.total_matches(), 0);
-        assert_eq!(bucket.bucket_size_seconds(), 60);
+        assert_eq!(bucket.bucket_size_seconds(), 60.0);
 
         let bucket = TimeBucket::new(Some("300".to_string())).unwrap();
-        assert_eq!(bucket.bucket_size_seconds(), 300);
+        assert_eq!(bucket.bucket_size_seconds(), 300.0);
 
         let bucket = TimeBucket::new(Some("auto".to_string())).unwrap();
-        assert_eq!(bucket.bucket_size_seconds(), 60); // Default before data
+        assert_eq!(bucket.bucket_size_seconds(), 60.0); // Default before data
     }
 
     #[test]
@@ -217,7 +223,7 @@ mod tests {
         bucket.add(end);
 
         let size = bucket.bucket_size_seconds();
-        assert!(size >= 60); // Should pick reasonable size
+        assert!(size >= 60.0); // Should pick reasonable size
     }
 
     #[test]
@@ -225,7 +231,7 @@ mod tests {
         let bucket = TimeBucket::new(Some("auto".to_string())).unwrap();
 
         // Test various durations
-        // The algorithm divides by 30 then rounds to nice intervals:
+        // The algorithm divides by 15 then rounds to nice intervals:
         // ideal < 60 -> 60
         // ideal < 300 -> 300
         // ideal < 900 -> 900
@@ -233,12 +239,12 @@ mod tests {
         // ideal < 21600 -> 21600
         // ideal < 86400 -> 86400
 
-        assert_eq!(bucket.calculate_auto_bucket_size(1200), 60); // 1200/30=40 < 60 -> 60
-        assert_eq!(bucket.calculate_auto_bucket_size(6000), 300); // 6000/30=200 >= 60 but < 300 -> 300
-        assert_eq!(bucket.calculate_auto_bucket_size(15000), 900); // 15000/30=500 >= 300 but < 900 -> 900
-        assert_eq!(bucket.calculate_auto_bucket_size(60000), 3600); // 60000/30=2000 >= 900 but < 3600 -> 3600
-        assert_eq!(bucket.calculate_auto_bucket_size(180000), 21600); // 180000/30=6000 >= 3600 but < 21600 -> 21600
-        assert_eq!(bucket.calculate_auto_bucket_size(1000000), 86400); // 1000000/30=33333 >= 21600 but < 86400 -> 86400
+        assert_eq!(bucket.calculate_auto_bucket_size(600.0), 60.0); // 600/15=40 < 60 -> 60
+        assert_eq!(bucket.calculate_auto_bucket_size(3000.0), 300.0); // 3000/15=200 >= 60 but < 300 -> 300
+        assert_eq!(bucket.calculate_auto_bucket_size(7500.0), 900.0); // 7500/15=500 >= 300 but < 900 -> 900
+        assert_eq!(bucket.calculate_auto_bucket_size(30000.0), 3600.0); // 30000/15=2000 >= 900 but < 3600 -> 3600
+        assert_eq!(bucket.calculate_auto_bucket_size(90000.0), 21600.0); // 90000/15=6000 >= 3600 but < 21600 -> 21600
+        assert_eq!(bucket.calculate_auto_bucket_size(500000.0), 86400.0); // 500000/15=33333 >= 21600 but < 86400 -> 86400
     }
 
     #[test]
@@ -267,5 +273,25 @@ mod tests {
         assert_eq!(bucket.total_matches(), 0);
         assert_eq!(bucket.get_buckets().len(), 0);
         assert!(bucket.time_range().is_none());
+    }
+
+    #[test]
+    fn test_sub_second_bucketing() {
+        let mut bucket = TimeBucket::new(Some("0.5".to_string())).unwrap();
+        assert_eq!(bucket.bucket_size_seconds(), 0.5);
+
+        // Add timestamps within 0.5 second intervals
+        let base_time = Utc.with_ymd_and_hms(2025, 10, 3, 12, 30, 0).unwrap();
+        let ts1 = base_time + chrono::Duration::milliseconds(100); // 0.1s
+        let ts2 = base_time + chrono::Duration::milliseconds(300); // 0.3s
+        let ts3 = base_time + chrono::Duration::milliseconds(600); // 0.6s (next bucket)
+
+        bucket.add(ts1);
+        bucket.add(ts2);
+        bucket.add(ts3);
+
+        let buckets = bucket.get_buckets();
+        assert_eq!(buckets.len(), 2); // Two separate 0.5s buckets
+        assert_eq!(bucket.total_matches(), 3);
     }
 }

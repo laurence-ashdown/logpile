@@ -146,15 +146,14 @@ All 10 supported timestamp formats are tested:
 While unit tests cover individual modules, the project also includes:
 
 1. **Example log files** in `examples/` directory:
-   - `sample.log` - Basic example
-   - `java-app.log` - 10,000+ line Java application log
-   - `iso8601-*.log` - Various timestamp format examples
-   - `apache-style.log`, `syslog.log`, `rfc2822.log`, etc.
+   - `sample-iso.log` - Basic example
+   - `sample-java-app.log` - 10,000+ line Java application log
+   - Various timestamp format examples (ISO 8601, Apache, Syslog, RFC 2822, etc.)
 
 2. **Manual testing** via command-line:
    ```bash
-   ./target/release/logpile "ERROR" examples/java-app.log --png test.png
-   ./target/release/logpile "INFO" examples/apache-style.log --json
+   ./target/release/logpile "ERROR" examples/sample-java-app.log --png test.png
+   ./target/release/logpile "INFO" examples/sample-iso.log --json
    ```
 
 ### Continuous Integration

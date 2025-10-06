@@ -15,9 +15,7 @@ target/
 Thumbs.db
 
 # Test output files (don't track generated files)
-*.png
-*.csv
-test-*.log
+examples/generated_logs/*
 
 # Keep Cargo.lock for applications (not libraries)
 # Cargo.lock

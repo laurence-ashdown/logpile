@@ -72,16 +72,16 @@ Fri, 03 Oct 2025 12:34:56 GMT INFO - Email sent
 
 Test files are provided in the `examples/` directory:
 
-- `iso8601-tz.log` - ISO 8601 with timezone
-- `iso8601-basic.log` - ISO 8601 without timezone
-- `apache-style.log` - Apache/Nginx format
-- `syslog.log` - Syslog format
-- `european-date.log` - DD/MM/YYYY format
-- `us-date.log` - MM/DD/YYYY format
-- `unix-timestamp.log` - Unix epoch timestamps
-- `microseconds.log` - High-precision timestamps
-- `rfc2822.log` - RFC 2822 format
-- `java-app.log` - Java application logs
+- ISO 8601 with timezone
+- ISO 8601 without timezone
+- Apache/Nginx format
+- Syslog format
+- DD/MM/YYYY format
+- MM/DD/YYYY format
+- Unix epoch timestamps
+- High-precision timestamps
+- RFC 2822 format
+- Java application logs
 
 ## Custom Formats
 
