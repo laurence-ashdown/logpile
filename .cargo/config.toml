@@ -1,0 +1,10 @@
+# Cargo configuration for the logpile project
+# This ensures clippy always runs with strict warnings
+
+# Configure clippy to always use strict settings
+[alias]
+c = "clippy --all-targets --all-features -- -D warnings"
+
+# Alternative: You can also set this globally by uncommenting the following:
+# [target.x86_64-unknown-linux-gnu]
+# rustflags = ["-D", "warnings"]

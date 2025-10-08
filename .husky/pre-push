@@ -1,0 +1,18 @@
+#!/bin/sh
+set -e
+
+echo "🚀 Running pre-push checks..."
+
+# Ensure code is formatted correctly
+echo "✨ Checking formatting..."
+cargo fmt --all -- --check
+
+# Ensure no lints or warnings
+echo "🔍 Running Clippy..."
+cargo clippy --all-targets --all-features -- -D warnings
+
+# Run tests (quiet to reduce noise)
+echo "🧪 Running tests..."
+cargo test --all --quiet
+
+echo "✅ All checks passed. Push approved!"
