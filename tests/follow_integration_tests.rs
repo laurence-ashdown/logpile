@@ -35,7 +35,7 @@ fn test_follow_mode_real_time_updates() {
         .expect("Failed to open file for appending");
 
     // Append multiple lines with delays
-    let updates = vec![
+    let updates = [
         "2025-10-03T12:01:00Z INFO Update 1\n",
         "2025-10-03T12:02:00Z INFO Update 2\n",
         "2025-10-03T12:03:00Z INFO Update 3\n",
@@ -72,7 +72,7 @@ fn test_follow_mode_real_time_updates() {
 
     // Should have processed at least the initial message (others might be bucketed)
     assert!(
-        lines.len() >= 1,
+        !lines.is_empty(),
         "Should have processed at least one line, got {}",
         lines.len()
     );
@@ -117,7 +117,7 @@ fn test_follow_mode_mixed_patterns() {
         .expect("Failed to open file for appending");
 
     // Append lines with different log levels
-    let updates = vec![
+    let updates = [
         "2025-10-03T12:01:00Z INFO User logged in\n",
         "2025-10-03T12:01:30Z WARN Connection timeout\n",
         "2025-10-03T12:02:00Z ERROR Database connection failed\n",
@@ -218,7 +218,7 @@ fn test_follow_mode_large_updates() {
 
     // Should have processed at least the initial message and some from the batch
     assert!(
-        lines.len() >= 1,
+        !lines.is_empty(),
         "Should have processed at least one line, got {}",
         lines.len()
     );
@@ -260,7 +260,7 @@ fn test_follow_mode_different_timestamps() {
         .expect("Failed to open file for appending");
 
     // Append lines with different timestamp formats
-    let updates = vec![
+    let updates = [
         "2025-10-03 12:01:00 INFO Apache format\n", // Space instead of T
         "03/10/2025 12:02:00 INFO European format\n", // DD/MM/YYYY format
         "Oct 03 12:03:00 INFO Syslog format\n",     // Syslog format
@@ -288,7 +288,7 @@ fn test_follow_mode_different_timestamps() {
 
     // Should have processed at least the initial message
     assert!(
-        lines.len() >= 1,
+        !lines.is_empty(),
         "Should have processed at least one timestamp format, got {}",
         lines.len()
     );
@@ -368,7 +368,7 @@ fn test_follow_mode_performance() {
 
     // Should have processed a reasonable number of rapid updates
     assert!(
-        lines.len() >= 1,
+        !lines.is_empty(),
         "Should have processed at least one rapid update, got {}",
         lines.len()
     );

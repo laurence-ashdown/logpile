@@ -39,7 +39,7 @@ impl AppState {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = std::env::args().collect();
 
-    if args.len() < 1 {
+    if args.is_empty() {
         println!(
             "Usage: {} [duration_seconds] [base_interval_ms] [variation_percent] [--simulate]",
             args[0]
@@ -94,7 +94,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     // Sample log messages for different scenarios
-    let normal_patterns = vec![
+    let normal_patterns = [
         // Application startup/shutdown
         ("INFO", "Application starting up"),
         ("INFO", "Database connection established"),
@@ -141,7 +141,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ("INFO", "Heartbeat signal received"),
     ];
 
-    let startup_patterns = vec![
+    let startup_patterns = [
         ("INFO", "Application starting up"),
         ("INFO", "Loading configuration"),
         ("INFO", "Database connection established"),
@@ -149,7 +149,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ("INFO", "Server listening on port 8080"),
         ("INFO", "Background workers started"),
     ];
-    let busy_patterns = vec![
+    let busy_patterns = [
         ("INFO", "Processing request from client"),
         ("INFO", "API endpoint called: /api/users"),
         ("INFO", "Database query executed successfully"),
@@ -158,7 +158,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ("WARN", "Database connection pool 80% full"),
         ("INFO", "Cache hit for key: user_12345"),
     ];
-    let error_patterns = vec![
+    let error_patterns = [
         ("ERROR", "Failed to connect to database"),
         ("ERROR", "Invalid user credentials"),
         ("ERROR", "File not found"),
@@ -171,7 +171,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ("WARN", "Retrying operation"),
     ];
 
-    let maintenance_patterns = vec![
+    let maintenance_patterns = [
         ("INFO", "Starting maintenance window"),
         ("INFO", "Backing up database"),
         ("INFO", "Cleaning temporary files"),
@@ -297,11 +297,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let message = match current_state {
             AppState::Error => match counter % 50 {
                 0..=10 => format!("{} - Error code: {}", message, 1000 + (counter % 9000)),
-                11..=20 => format!(
-                    "{} - Stack trace: {}",
-                    message,
-                    format!("stack_{:06}", counter)
-                ),
+                11..=20 => format!("{} - Stack trace: stack_{:06}", message, counter),
                 21..=30 => format!(
                     "{} - Component: {}",
                     message,
@@ -310,25 +306,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 _ => message.to_string(),
             },
             AppState::Busy => match counter % 40 {
-                0..=10 => format!(
-                    "{} - Request ID: {}",
-                    message,
-                    format!("req_{:06}", counter)
-                ),
+                0..=10 => format!("{} - Request ID: req_{:06}", message, counter),
                 11..=20 => format!("{} - Duration: {}ms", message, 50 + (counter % 500)),
                 21..=30 => format!("{} - Queue depth: {}", message, 1 + (counter % 100)),
                 _ => message.to_string(),
             },
             _ => match counter % 100 {
                 0..=10 => format!("{} - User ID: {}", message, 1000 + (counter % 9000)),
-                11..=20 => format!(
-                    "{} - Request ID: {}",
-                    message,
-                    format!("req_{:06}", counter)
-                ),
+                11..=20 => format!("{} - Request ID: req_{:06}", message, counter),
                 21..=30 => format!("{} - Duration: {}ms", message, 50 + (counter % 500)),
                 31..=40 => format!("{} - IP: 192.168.1.{}", message, 1 + (counter % 254)),
-                41..=50 => format!("{} - Session: {}", message, format!("sess_{:08x}", counter)),
+                41..=50 => format!("{} - Session: sess_{:08x}", message, counter),
                 _ => message.to_string(),
             },
         };
@@ -346,15 +334,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Burst of 3-7 error messages quickly
             let burst_count = rand::rng().random_range(3..=7);
             for i in 1..=burst_count {
-                let burst_timestamp = timestamp
-                    + chrono::Duration::seconds(i)
-                    + chrono::Duration::milliseconds(i as i64);
+                let burst_timestamp =
+                    timestamp + chrono::Duration::seconds(i) + chrono::Duration::milliseconds(i);
                 let burst_msg = format!("Cascading error {} of {}", i, burst_count);
                 writeln!(
                     writer,
-                    "{} {} {}",
-                    burst_timestamp.format("%Y-%m-%dT%H:%M:%S%.6fZ").to_string(),
-                    "ERROR",
+                    "{} ERROR {}",
+                    burst_timestamp.format("%Y-%m-%dT%H:%M:%S%.6fZ"),
                     burst_msg
                 )?;
             }

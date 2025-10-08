@@ -25,7 +25,7 @@ fn test_follow_mode_basic() {
     let file_path = temp_file.path().to_str().unwrap();
 
     // Test basic follow mode with timeout
-    let mut child = Command::new(&logpile_bin())
+    let mut child = Command::new(logpile_bin())
         .args(["INFO", file_path, "--follow"])
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -54,7 +54,7 @@ fn test_follow_mode_with_new_lines() {
     let file_path = temp_file.path().to_str().unwrap();
 
     // Start follow mode
-    let mut child = Command::new(&logpile_bin())
+    let mut child = Command::new(logpile_bin())
         .args(["INFO", file_path, "--follow"])
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -93,7 +93,7 @@ fn test_follow_mode_csv_output() {
     let file_path = temp_file.path().to_str().unwrap();
 
     // Start follow mode with CSV output
-    let mut child = Command::new(&logpile_bin())
+    let mut child = Command::new(logpile_bin())
         .args(["INFO", file_path, "--follow", "--csv"])
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -145,7 +145,7 @@ fn test_follow_mode_csv_no_headers() {
     let file_path = temp_file.path().to_str().unwrap();
 
     // Start follow mode with CSV output and no headers
-    let mut child = Command::new(&logpile_bin())
+    let mut child = Command::new(logpile_bin())
         .args(["INFO", file_path, "--follow", "--csv", "--no-headers"])
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -198,7 +198,7 @@ fn test_follow_mode_plot_output() {
     let file_path = temp_file.path().to_str().unwrap();
 
     // Start follow mode with plot output
-    let mut child = Command::new(&logpile_bin())
+    let mut child = Command::new(logpile_bin())
         .args(["INFO", file_path, "--follow", "--plot"])
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -237,7 +237,7 @@ fn test_follow_mode_json_output() {
     let file_path = temp_file.path().to_str().unwrap();
 
     // Start follow mode with JSON output
-    let mut child = Command::new(&logpile_bin())
+    let mut child = Command::new(logpile_bin())
         .args(["INFO", file_path, "--follow", "--json"])
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -290,7 +290,7 @@ fn test_follow_mode_multiple_patterns() {
     let file_path = temp_file.path().to_str().unwrap();
 
     // Start follow mode with multiple grep patterns
-    let mut child = Command::new(&logpile_bin())
+    let mut child = Command::new(logpile_bin())
         .args(["INFO", file_path, "--follow", "--grep", "ERROR"])
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -334,7 +334,7 @@ fn test_follow_mode_no_matches() {
     let file_path = temp_file.path().to_str().unwrap();
 
     // Start follow mode with pattern that won't match
-    let mut child = Command::new(&logpile_bin())
+    let mut child = Command::new(logpile_bin())
         .args(["INFO", file_path, "--follow"])
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -376,7 +376,7 @@ fn test_follow_mode_with_custom_bucket_size() {
     let file_path = temp_file.path().to_str().unwrap();
 
     // Start follow mode with custom bucket size
-    let mut child = Command::new(&logpile_bin())
+    let mut child = Command::new(logpile_bin())
         .args(["INFO", file_path, "--follow", "--bucket", "60"])
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -415,7 +415,7 @@ fn test_follow_mode_with_auto_bucket() {
     let file_path = temp_file.path().to_str().unwrap();
 
     // Start follow mode with auto bucket size
-    let mut child = Command::new(&logpile_bin())
+    let mut child = Command::new(logpile_bin())
         .args(["INFO", file_path, "--follow", "--bucket", "auto"])
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -452,7 +452,7 @@ fn test_follow_mode_graceful_shutdown() {
     let file_path = temp_file.path().to_str().unwrap();
 
     // Start follow mode
-    let mut child = Command::new(&logpile_bin())
+    let mut child = Command::new(logpile_bin())
         .args(["INFO", file_path, "--follow"])
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
